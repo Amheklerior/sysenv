@@ -10,6 +10,7 @@ TARGET_DIR="$HOME/dev/personal/devenv"
 URL_REWRITE="-c url.https://github.com/.insteadOf=git@github.com:"
 GPG="$SCRIPT_DIR/gpg-keys"
 SSH="$SCRIPT_DIR/ssh-keys"
+DEVENV_SSH_URL="git@github.com:Amheklerior/devenv.git"
 
 # install homebrew
 if ! command -v brew &>/dev/null; then
@@ -73,3 +74,20 @@ chmod 644 ~/.ssh/personal.pub ~/.ssh/work-server.pub
 
 # check ssh access
 ssh -T git@github.com || true
+
+prev_dir="$(pwd)"
+cd "$TARGET_DIR"
+
+# switch parent repo remote to SSH
+git remote set-url origin "$DEVENV_SSH_URL"
+
+# update the .git/config submodule URLs with those specified in .gitsubmodule
+git submodule sync --recursive
+
+# switch each submodule's own remote to SSH
+git submodule foreach --recursive '
+  ssh_url="$(git config --file .gitmodules "submodule.${name}.url")"
+  git remote set-url origin "$ssh_url"
+'
+
+cd "$prev_dir"

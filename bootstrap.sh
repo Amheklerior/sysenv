@@ -61,3 +61,8 @@ gpg --decrypt "$SSH/keys/work-server.gpg" >~/.ssh/work-server
 
 # symlink SSH config
 ln -sf "$SSH/hosts/config" ~/.ssh/config
+
+# apply secure permissions
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/personal ~/.ssh/work-server ~/.ssh/config
+chmod 644 ~/.ssh/personal.pub ~/.ssh/work-server.pub

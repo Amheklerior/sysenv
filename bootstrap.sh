@@ -8,8 +8,8 @@ set -euo pipefail
 
 TARGET_DIR="$HOME/dev/personal/devenv"
 URL_REWRITE="-c url.https://github.com/.insteadOf=git@github.com:"
-GPG="$SCRIPT_DIR/gpg-keys"
-SSH="$SCRIPT_DIR/ssh-keys"
+GPG="$TARGET_DIR/gpg-keys"
+SSH="$TARGET_DIR/ssh-keys"
 DEVENV_SSH_URL="git@github.com:Amheklerior/devenv.git"
 
 # install homebrew

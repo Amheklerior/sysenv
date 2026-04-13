@@ -49,6 +49,10 @@ if ! gpg --list-secret-keys amheklerior &>/dev/null; then
   rm -f "$TMPFILE"
 fi
 
+# ensure new files are created with 600 permissions (owner read/write only)
+# instead of 644 permissions (globally readable)
+umask 077
+
 # create local SSH directory if it doesn't exist
 mkdir -p ~/.ssh
 

@@ -9,6 +9,7 @@ set -euo pipefail
 TARGET_DIR="$HOME/dev/personal/devenv"
 URL_REWRITE="-c url.https://github.com/.insteadOf=git@github.com:"
 GPG="$SCRIPT_DIR/gpg-keys"
+SSH="$SCRIPT_DIR/ssh-keys"
 
 # install homebrew
 if ! command -v brew &>/dev/null; then
@@ -47,3 +48,16 @@ if ! gpg --list-secret-keys amheklerior &>/dev/null; then
   gpg --import "$TMPFILE"
   rm -f "$TMPFILE"
 fi
+
+# create local SSH directory if it doesn't exist
+mkdir -p ~/.ssh
+
+# copy public SSH keys into the system
+cp "$SSH/keys/*.pub" ~/.ssh
+
+# copy decrypted SSH private keys into the system
+gpg --decrypt "$SSH/keys/personal.gpg" >~/.ssh/personal
+gpg --decrypt "$SSH/keys/work-server.gpg" >~/.ssh/work-server
+
+# symlink SSH config
+ln -sf "$SSH/hosts/config" ~/.ssh/config

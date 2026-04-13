@@ -6,6 +6,8 @@
 #   -o pipefail   make pipelines fail if any command in them fails
 set -euo pipefail
 
+TARGET_DIR="$HOME/dev/personal/devenv"
+
 # install homebrew
 if ! command -v brew &>/dev/null; then
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -23,4 +25,12 @@ brew install gh
 # authenticate my Github account
 if ! gh auth status &>/dev/null; then
   gh auth login
+fi
+
+# cloning or updating dev env repo
+if [ ! -d "$TARGET_DIR" ]; then
+  mkdir -p "$(dirname "$TARGET_DIR")"
+  gh repo clone Amheklerior/devenv "$TARGET_DIR"
+else
+  git -C "$TARGET_DIR" pull
 fi

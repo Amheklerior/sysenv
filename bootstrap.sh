@@ -58,7 +58,7 @@ umask 077
 mkdir -p ~/.ssh
 
 # copy public SSH keys into the system
-cp "$SSH/keys/*.pub" ~/.ssh
+cp "$SSH"/keys/*.pub ~/.ssh
 
 # copy decrypted SSH private keys into the system
 gpg --decrypt "$SSH/keys/personal.gpg" >~/.ssh/personal

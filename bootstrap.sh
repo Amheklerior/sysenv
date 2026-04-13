@@ -66,3 +66,6 @@ ln -sf "$SSH/hosts/config" ~/.ssh/config
 chmod 700 ~/.ssh
 chmod 600 ~/.ssh/personal ~/.ssh/work-server ~/.ssh/config
 chmod 644 ~/.ssh/personal.pub ~/.ssh/work-server.pub
+
+# check ssh access
+ssh -T git@github.com || true

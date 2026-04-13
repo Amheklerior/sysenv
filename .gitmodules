@@ -1,8 +1,8 @@
-[submodule "gpg-keys"]
-  path = gpg-keys
+[submodule "gpg"]
+  path = gpg
   url = git@github.com:Amheklerior/gpg-keys
   branch = main
-[submodule "ssh-keys"]
-  path = ssh-keys
+[submodule "ssh"]
+  path = ssh
   url = git@github.com:Amheklerior/ssh-keys
   branch = main

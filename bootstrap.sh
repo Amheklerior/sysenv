@@ -87,11 +87,11 @@ fi
 # ------------------------------------------------------------------------------
 # GPG KEYS SETUP
 # ------------------------------------------------------------------------------
-# Import public and private GPG keys located within the gpg-keys git submodule.
-# Also import the ownertrust list to prevent trust warnings on the new device.
+# Import public and private GPG keys located within the gpg git submodule. Also
+# import the ownertrust list to prevent trust warnings on the new device.
 # ------------------------------------------------------------------------------
 
-GPG="$TARGET_DIR/gpg-keys"
+GPG="$TARGET_DIR/gpg"
 
 # import GPG keys and ownertrust file
 gpg --import "$GPG/keys/amheklerior.pub.asc"
@@ -106,8 +106,8 @@ fi
 # ------------------------------------------------------------------------------
 # SSH KEYS SETUP
 # ------------------------------------------------------------------------------
-# Copy public and private SSH keys from the ssh-keys git submodule into the
-# system's .ssh directory. Symlink also the ssh config file. Finally, it applies
+# Copy public and private SSH keys from the ssh git submodule into the system's
+# `.ssh` directory. Symlink also the ssh config file. Finally, it applies
 # sensible permission rights for accessing them (public keys are readable by
 # everyone, while private keys and the ssh host configurations are only readable
 # and modifiable by the owner).
@@ -116,7 +116,7 @@ fi
 #
 # ------------------------------------------------------------------------------
 
-SSH="$TARGET_DIR/ssh-keys"
+SSH="$TARGET_DIR/ssh"
 
 # ensure new files are created with 600 permissions (owner read/write only)
 # instead of 644 permissions (globally readable)

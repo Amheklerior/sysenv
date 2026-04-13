@@ -24,7 +24,7 @@ if ! brew analytics state | grep -q "disabled"; then
 fi
 
 # install dependencies
-brew install gh
+brew install gh gnupg
 
 # authenticate my Github account
 if ! gh auth status &>/dev/null; then

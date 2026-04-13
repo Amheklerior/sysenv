@@ -89,4 +89,8 @@ git submodule foreach --recursive '
   git remote set-url origin "$ssh_url"
 '
 
+# check remotes are now using SSH
+git remote get-url origin
+git submodule foreach --recursive 'git remote get-url origin'
+
 popd

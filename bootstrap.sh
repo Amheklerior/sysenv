@@ -75,8 +75,7 @@ chmod 644 ~/.ssh/personal.pub ~/.ssh/work-server.pub
 # check ssh access
 ssh -T git@github.com || true
 
-prev_dir="$(pwd)"
-cd "$TARGET_DIR"
+pushd "$TARGET_DIR"
 
 # switch parent repo remote to SSH
 git remote set-url origin "$DEVENV_SSH_URL"
@@ -90,4 +89,4 @@ git submodule foreach --recursive '
   git remote set-url origin "$ssh_url"
 '
 
-cd "$prev_dir"
+popd

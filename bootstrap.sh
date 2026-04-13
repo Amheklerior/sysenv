@@ -16,3 +16,11 @@ fi
 if ! brew analytics state | grep -q "disabled"; then
   brew analytics off
 fi
+
+# install dependencies
+brew install gh
+
+# authenticate my Github account
+if ! gh auth status &>/dev/null; then
+  gh auth login
+fi

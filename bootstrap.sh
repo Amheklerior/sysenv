@@ -8,6 +8,7 @@ set -euo pipefail
 
 TARGET_DIR="$HOME/dev/personal/devenv"
 URL_REWRITE="-c url.https://github.com/.insteadOf=git@github.com:"
+GPG="$SCRIPT_DIR/gpg-keys"
 
 # install homebrew
 if ! command -v brew &>/dev/null; then
@@ -35,4 +36,14 @@ if [ ! -d "$TARGET_DIR" ]; then
 else
   git -C "$TARGET_DIR" pull
   git -C "$TARGET_DIR" "$URL_REWRITE" submodule update --init --recursive
+fi
+
+# import GPG keys and ownertrust file
+gpg --import "$GPG/keys/amheklerior.pub.asc"
+gpg --import-ownertrust "$GPG/config/ownertrust.txt"
+if ! gpg --list-secret-keys amheklerior &>/dev/null; then
+  TMPFILE="$(mktemp)"
+  gpg --decrypt -o "$TMPFILE" "$GPG/keys/amheklerior.sec.asc.gpg"
+  gpg --import "$TMPFILE"
+  rm -f "$TMPFILE"
 fi

@@ -1,10 +1,10 @@
 [submodule "gpg"]
   path = gpg
-  url = git@github.com:Amheklerior/gpg
+  url = git@github.com:Amheklerior/gpg.git
   branch = main
 [submodule "ssh"]
   path = ssh
-  url = git@github.com:Amheklerior/ssh
+  url = git@github.com:Amheklerior/ssh.git
   branch = main
 [submodule "packages"]
 	path = packages

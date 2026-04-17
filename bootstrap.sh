@@ -6,7 +6,7 @@
 #   -o pipefail   make pipelines fail if any command in them fails
 set -euo pipefail
 
-TARGET_DIR="$HOME/dev/personal/devenv"
+TARGET_DIR="$HOME/dev/personal/sysenv"
 
 # ------------------------------------------------------------------------------
 # HOMEBREW
@@ -47,7 +47,7 @@ brew install gh gnupg
 # browser or token). The script will exit if authentication fails or is cancelled,
 # since all subsequent steps depend on it.
 #
-# Althouth the main devenv repo is public (no auth needed), it contains private
+# Althouth the main sysenv repo is public (no auth needed), it contains private
 # repos as submodules (requiring Github auth).
 #
 # WARN: make sure to choose HTTPS protocol since SSH keys are not yet set.
@@ -78,7 +78,7 @@ URL_REWRITE="-c url.https://github.com/.insteadOf=git@github.com:"
 # cloning or updating dev env repo
 if [ ! -d "$TARGET_DIR" ]; then
   mkdir -p "$(dirname "$TARGET_DIR")"
-  gh repo clone Amheklerior/devenv "$TARGET_DIR" -- "$URL_REWRITE" --recurse-submodules
+  gh repo clone Amheklerior/sysenv "$TARGET_DIR" -- "$URL_REWRITE" --recurse-submodules
 else
   git -C "$TARGET_DIR" pull
   git -C "$TARGET_DIR" "$URL_REWRITE" submodule update --init --recursive
@@ -103,18 +103,18 @@ ssh -T git@github.com || true
 # SWITCH REPO GIT PROTOCOL
 # ------------------------------------------------------------------------------
 # Now that SSH keys are setup, switch git protocol from HTTPS to SSH for the
-# devenv repo and all its submodules, so future git operations use SSH.
+# sysenv repo and all its submodules, so future git operations use SSH.
 #
 # NOTE: pushd/popd are used to move into the repo directory and back to where the
 #  execution was, allowing for cleaner git commands (avoiding the noisy -C opt).
 # ------------------------------------------------------------------------------
 
-DEVENV_SSH_URL="git@github.com:Amheklerior/devenv.git"
+SYSENV_SSH_URL="git@github.com:Amheklerior/sysenv.git"
 
 pushd "$TARGET_DIR"
 
 # switch parent repo remote to SSH
-git remote set-url origin "$DEVENV_SSH_URL"
+git remote set-url origin "$SYSENV_SSH_URL"
 
 # update the .git/config submodule URLs with those specified in .gitsubmodule
 git submodule sync --recursive

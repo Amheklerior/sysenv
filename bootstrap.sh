@@ -87,58 +87,14 @@ fi
 # ------------------------------------------------------------------------------
 # GPG KEYS SETUP
 # ------------------------------------------------------------------------------
-# Import public and private GPG keys located within the gpg git submodule. Also
-# import the ownertrust list to prevent trust warnings on the new device.
-# ------------------------------------------------------------------------------
 
-GPG="$TARGET_DIR/gpg"
-
-# import GPG keys and ownertrust file
-gpg --import "$GPG/keys/amheklerior.pub.asc"
-gpg --import-ownertrust "$GPG/config/ownertrust.txt"
-if ! gpg --list-secret-keys amheklerior &>/dev/null; then
-  TMPFILE="$(mktemp)"
-  gpg --decrypt -o "$TMPFILE" "$GPG/keys/amheklerior.sec.asc.gpg"
-  gpg --import "$TMPFILE"
-  rm -f "$TMPFILE"
-fi
+bash "$TARGET_DIR/gpg/setup.sh"
 
 # ------------------------------------------------------------------------------
 # SSH KEYS SETUP
 # ------------------------------------------------------------------------------
-# Copy public and private SSH keys from the ssh git submodule into the system's
-# `.ssh` directory. Symlink also the ssh config file. Finally, it applies
-# sensible permission rights for accessing them (public keys are readable by
-# everyone, while private keys and the ssh host configurations are only readable
-# and modifiable by the owner).
-#
-# NOTE: private keys are decrypted using the GPG identity configured above.
-#
-# ------------------------------------------------------------------------------
 
-SSH="$TARGET_DIR/ssh"
-
-# ensure new files are created with 600 permissions (owner read/write only)
-# instead of 644 permissions (globally readable)
-umask 077
-
-# create local SSH directory if it doesn't exist
-mkdir -p ~/.ssh
-
-# copy public SSH keys into the system
-cp "$SSH"/keys/*.pub ~/.ssh
-
-# copy decrypted SSH private keys into the system
-gpg --decrypt "$SSH/keys/personal.gpg" >~/.ssh/personal
-gpg --decrypt "$SSH/keys/work-server.gpg" >~/.ssh/work-server
-
-# symlink SSH config
-ln -sf "$SSH/hosts/config" ~/.ssh/config
-
-# apply secure permissions
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/personal ~/.ssh/work-server ~/.ssh/config
-chmod 644 ~/.ssh/personal.pub ~/.ssh/work-server.pub
+bash "$TARGET_DIR/ssh/setup.sh"
 
 # check ssh access
 ssh -T git@github.com || true

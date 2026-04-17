@@ -6,3 +6,7 @@
   path = ssh
   url = git@github.com:Amheklerior/ssh
   branch = main
+[submodule "packages"]
+	path = packages
+	url = git@github.com:Amheklerior/packages.git
+	branch = main

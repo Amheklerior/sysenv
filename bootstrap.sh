@@ -121,7 +121,7 @@ git submodule sync --recursive
 
 # switch each submodule's own remote to SSH
 git submodule foreach --recursive '
-  ssh_url="$(git config --file .gitmodules "submodule.${name}.url")"
+  ssh_url="$(git config --file "$toplevel/.gitmodules" "submodule.$name.url")"
   git remote set-url origin "$ssh_url"
 '
 

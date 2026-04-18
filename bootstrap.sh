@@ -66,22 +66,24 @@ fi
 # submodules (--recurse-submodule). In case the repo already exists, just update
 # with the latest changes, making sure to also update its submodule.
 #
-# NOTE: URL_REWRITE rewrites SSH URLs (git@github.com:) to HTTPS (https://github.com/)
-#   on the fly. This is necessary because submodule URLs are hardcoded in .gitmodules
-#   and use SSH, which requires keys that are not configured yet. The rewrite is
-#   passed as a temporary git -c flag and does not persist to the git config.
+# NOTE: the -c url...insteadOf flag rewrites SSH URLs (git@github.com:) to HTTPS
+#   (https://github.com/) on the fly. This is necessary because submodule URLs are
+#   set in .gitmodules using SSH, which requires SSH keys that are not configured
+#   yet. The flag is temporary and does not persist to the git config.
 #
 # ------------------------------------------------------------------------------
-
-URL_REWRITE="-c url.https://github.com/.insteadOf=git@github.com:"
 
 # cloning or updating dev env repo
 if [ ! -d "$TARGET_DIR" ]; then
   mkdir -p "$(dirname "$TARGET_DIR")"
-  gh repo clone Amheklerior/sysenv "$TARGET_DIR" -- "$URL_REWRITE" --recurse-submodules
+  gh repo clone Amheklerior/sysenv "$TARGET_DIR" -- \
+    -c url.https://github.com/.insteadOf=git@github.com: \
+    --recurse-submodules
 else
   git -C "$TARGET_DIR" pull
-  git -C "$TARGET_DIR" "$URL_REWRITE" submodule update --init --recursive
+  git -C "$TARGET_DIR" \
+    -c url.https://github.com/.insteadOf=git@github.com: \
+    submodule update --init --recursive
 fi
 
 # ------------------------------------------------------------------------------

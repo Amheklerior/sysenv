@@ -134,19 +134,21 @@ git submodule foreach --recursive 'git remote get-url origin'
 popd
 
 # ------------------------------------------------------------------------------
-# INSTALL PACKAGES AND APPLICATIONS
+# INSTALL PACKAGES
 # ------------------------------------------------------------------------------
 # Install all packages, applications, Mac App Store apps, and VS Code extensions
 # defined in the Brewfile. The bundle is globally available where Homebrew expects
 # it (~/.config/homebrew/Brewfile) via a symlink.
 #
-# NOTE: don't interrupt the script packages installation failures.
+# NOTE: the script won't interrupt on packages installation failures.
 #
 # ------------------------------------------------------------------------------
 
+export HOMEBREW_BUNDLE_FILE_GLOBAL="$HOME/.config/homebrew/Brewfile"
+mkdir -p "$(dirname "$HOMEBREW_BUNDLE_FILE_GLOBAL")"
+
 # symlink the Brewfile bundle to be globally available
-mkdir -p ~/.config/homebrew
-ln -sf "$TARGET_DIR/packages/Brewfile" ~/.config/homebrew/Brewfile
+ln -sf "$TARGET_DIR/packages/Brewfile" "$HOMEBREW_BUNDLE_FILE_GLOBAL"
 
 # install all packages, application, and vscode extensions from the bundle
 if ! brew bundle check --global; then

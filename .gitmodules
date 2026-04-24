@@ -10,3 +10,7 @@
 	path = packages
 	url = git@github.com:Amheklerior/packages.git
 	branch = main
+[submodule "dotfiles"]
+	path = dotfiles
+	url = git@github.com:Amheklerior/dotfiles.git
+	branch = main

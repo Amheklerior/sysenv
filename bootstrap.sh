@@ -9,6 +9,23 @@ set -euo pipefail
 TARGET_DIR="$HOME/dev/personal/sysenv"
 
 # ------------------------------------------------------------------------------
+# CHECK OS REQUIREMENTS
+# ------------------------------------------------------------------------------
+# This script is intended for macOS systems running on Apple Silicon only.
+# Exits early with an error if the requirements are not met.
+# ------------------------------------------------------------------------------
+
+if [ "$(uname -s)" != "Darwin" ]; then
+  echo "Error: This script requires macOS. Detected OS: $(uname -s)" >&2
+  exit 1
+fi
+
+if [ "$(uname -m)" != "arm64" ]; then
+  echo "Error: This script requires an Apple Silicon processor. Detected architecture: $(uname -m)" >&2
+  exit 1
+fi
+
+# ------------------------------------------------------------------------------
 # HOMEBREW
 # ------------------------------------------------------------------------------
 # Homebrew is the package manager used to install any other dependency and tool.
@@ -154,3 +171,62 @@ ln -sf "$TARGET_DIR/packages/Brewfile" "$HOMEBREW_BUNDLE_FILE_GLOBAL"
 if ! brew bundle check --global; then
   brew bundle install --global --verbose || :
 fi
+
+# ------------------------------------------------------------------------------
+# BACKUP PRE-EXISTING DOTFILES
+# ------------------------------------------------------------------------------
+# Before symlinking, check for any pre-existing files or directories at the
+# stow target locations. If found and not already stow symlinks, move them
+# into a `~/.dotbak/<timestamp>/` backup dir to avoid conflicts.
+# ------------------------------------------------------------------------------
+
+DOTFILES_BACKUP_DIR="$HOME/.dotbak/$(date +%Y%m%d_%H%M%S)"
+
+# these are the actual dot-files that will be symlinekd with stow
+DOTFILES_FILES=(
+  ".gitconfig"
+  ".zalias"
+  ".zprofile"
+  ".zshenv"
+  ".zshrc"
+  ".config/starship.toml"
+  "dev/personal/.markdownlintrc"
+)
+
+# these are the dirs that will be symlinked as is with stow, so check these
+# as single units rather than dealing with their files directly
+DOTFILES_DIRS=(
+  ".config/delta"
+  ".config/ghostty"
+  ".config/git"
+  ".config/nvim"
+  ".config/zsh"
+)
+
+for f in "${DOTFILES_FILES[@]}"; do
+  if [ -e "$HOME/$f" ] && [ ! -L "$HOME/$f" ]; then
+    mkdir -p "$(dirname "$DOTFILES_BACKUP_DIR/$f")"
+    mv "$HOME/$f" "$DOTFILES_BACKUP_DIR/$f"
+  fi
+done
+
+for d in "${DOTFILES_DIRS[@]}"; do
+  if [ -d "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
+    mkdir -p "$DOTFILES_BACKUP_DIR/$d"
+    mv "$HOME/$d" "$DOTFILES_BACKUP_DIR/$d"
+  fi
+done
+
+# ------------------------------------------------------------------------------
+# LINK DOTFILES
+# ------------------------------------------------------------------------------
+# Symlinks all dotfiles from the dotfiles submodule into $HOME using GNU Stow.
+# The `~/.config/` is ensured to exist as a real directory so stow descends
+# into it and symlinks its subdirectories individually, rather than symlinking
+# the entire `~/.config/` dir. Same goes for the `~/dev/personal/` dir.
+# ------------------------------------------------------------------------------
+
+mkdir -p "$HOME/.config"
+mkdir -p "$HOME/dev/personal"
+
+stow -R -d "$TARGET_DIR/dotfiles" -t "$HOME" home

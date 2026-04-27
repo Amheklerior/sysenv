@@ -7,10 +7,10 @@
   url = git@github.com:Amheklerior/ssh.git
   branch = main
 [submodule "packages"]
-	path = packages
-	url = git@github.com:Amheklerior/packages.git
-	branch = main
+  path = packages
+  url = git@github.com:Amheklerior/packages.git
+  branch = main
 [submodule "dotfiles"]
-	path = dotfiles
-	url = git@github.com:Amheklerior/dotfiles.git
-	branch = main
+  path = dotfiles
+  url = git@github.com:Amheklerior/dotfiles.git
+  branch = main

@@ -175,6 +175,54 @@ if ! brew bundle check --global; then
 fi
 
 # ------------------------------------------------------------------------------
+# SETUP SHELL
+# ------------------------------------------------------------------------------
+# Configures Zsh (Homebrew-managed) as the default shell, and updates the
+# /var/select/sh symlink so that `sh` resolves to zsh system-wide.
+#
+# NOTE: the /var/select/sh symlink intentionally points to Apple's system zsh
+#   (/bin/zsh), not Homebrew's. This is becaude that symlink is resolved at early
+#   boot before Homebrew paths are available.
+#
+# ------------------------------------------------------------------------------
+
+# set ZSH as the default system shell
+if ! grep -Fxq "$(brew --prefix)/bin/zsh" /etc/shells; then
+  echo "$(brew --prefix)/bin/zsh" | sudo tee -a /etc/shells >/dev/null
+fi
+
+# set ZSH as the default login shell
+if ! [ "$SHELL" = "$(brew --prefix)/bin/zsh" ]; then
+  chsh -s "$(brew --prefix)/bin/zsh"
+fi
+
+# update `sh` symlink to point to zsh instead of bash
+if ! sh --version | grep -q zsh; then
+  sudo ln -sfv /bin/zsh /var/select/sh
+fi
+
+# ------------------------------------------------------------------------------
+# INSTALL ZSH PLUGINS
+# ------------------------------------------------------------------------------
+# Installs third-party Zsh plugins that are sourced by .zshrc but not managed
+# by Homebrew. Plugins are cloned into ~/.config/plugins/ (matching the
+# SHELL_PLUGINS path defined in .zshenv).
+#
+# - fzf-tab: replaces zsh's default completion menu with fzf-powered fuzzy search
+#
+# NOTE: --depth 1 fetches only the latest commit, skipping full history since
+#   we only need the working tree of a third-party plugin, not its git history.
+#
+# ------------------------------------------------------------------------------
+
+ZSH_PLUGINS_DIR="$HOME/.config/plugins"
+mkdir -p "$ZSH_PLUGINS_DIR"
+
+if [ ! -d "$ZSH_PLUGINS_DIR/fzf-tab" ]; then
+  git clone --depth 1 https://github.com/Aloxaf/fzf-tab.git "$ZSH_PLUGINS_DIR/fzf-tab"
+fi
+
+# ------------------------------------------------------------------------------
 # BACKUP PRE-EXISTING DOTFILES
 # ------------------------------------------------------------------------------
 # Before symlinking, check for any pre-existing files or directories at the

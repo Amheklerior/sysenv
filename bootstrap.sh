@@ -158,10 +158,12 @@ popd
 # it (~/.config/homebrew/Brewfile) via a symlink.
 #
 # NOTE: the script won't interrupt on packages installation failures.
+# NOTE: HOMEBREW_CASK_OPTS is set to bypass macOS Gatekeeper for cask installs.
 #
 # ------------------------------------------------------------------------------
 
 export HOMEBREW_BUNDLE_FILE_GLOBAL="$HOME/.config/homebrew/Brewfile"
+export HOMEBREW_CASK_OPTS="--no-quarantine"
 mkdir -p "$(dirname "$HOMEBREW_BUNDLE_FILE_GLOBAL")"
 
 # symlink the Brewfile bundle to be globally available

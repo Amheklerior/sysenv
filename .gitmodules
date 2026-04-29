@@ -14,3 +14,7 @@
   path = dotfiles
   url = git@github.com:Amheklerior/dotfiles.git
   branch = main
+[submodule "prefs"]
+  path = prefs
+  url = git@github.com:Amheklerior/prefs.git
+  branch = main

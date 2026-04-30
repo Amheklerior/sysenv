@@ -282,6 +282,37 @@ mkdir -p "$HOME/dev/personal"
 stow -R -d "$TARGET_DIR/dotfiles" -t "$HOME" home
 
 # ------------------------------------------------------------------------------
+# TOUCH ID SUDO SETUP
+# ------------------------------------------------------------------------------
+# Enables Touch ID for sudo authentication. Uses /etc/pam.d/sudo_local, which is
+# included by macOS and survives system updates (unlike /etc/pam.d/sudo).
+#
+# NOTE: only enable it on systems where Touch ID hardware is present, silently
+#   skip on machines without it (e.g. Mac mini with a third-party keyboard).
+#
+# ------------------------------------------------------------------------------
+
+PAM_TID_LINE="auth       sufficient     pam_tid.so"
+SUDO_LOCAL="/etc/pam.d/sudo_local"
+
+if ioreg -c AppleEmbeddedTouchIDDevice | grep -q "AppleEmbeddedTouchIDDevice"; then
+  # create the `sudo_local` file if doesn't exist (use the template if present)
+  if [ ! -f "$SUDO_LOCAL" ] && [ -f "${SUDO_LOCAL}.template" ]; then
+    sudo cp "${SUDO_LOCAL}.template" "$SUDO_LOCAL"
+  elif [ ! -f "$SUDO_LOCAL" ]; then
+    sudo touch "$SUDO_LOCAL"
+  fi
+
+  # add touch-id authorization for sudo rights
+  if ! grep -qF "$PAM_TID_LINE" "$SUDO_LOCAL"; then
+    echo "$PAM_TID_LINE" | sudo tee -a "$SUDO_LOCAL" >/dev/null
+  fi
+
+  # allow touch-id for sudo to work even during Apple Remote Desktop sessions
+  defaults write com.apple.security.authorization ignoreArd -bool true
+fi
+
+# ------------------------------------------------------------------------------
 # SYSTEM AND APPS PREFERENCES
 # ------------------------------------------------------------------------------
 # Applies macOS system preferences and scriptable third-party app preferences.

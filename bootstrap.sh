@@ -65,10 +65,11 @@ fi
 # Installs the required CLI tools via Homebrew.
 #   - gh:     the official GitHub CLI, used for authentication and repo cloning.
 #   - gnupg:  GNU Privacy Guard, used for GPG key management.
+#   - stow:   symlink farm manager, used to link dotfiles into $HOME.
 # ------------------------------------------------------------------------------
 
 # install dependencies
-brew install gh gnupg
+brew install gh gnupg stow
 
 # ------------------------------------------------------------------------------
 # GITHUB AUTHENTICATION

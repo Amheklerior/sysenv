@@ -26,6 +26,20 @@ if [ "$(uname -m)" != "arm64" ]; then
 fi
 
 # ------------------------------------------------------------------------------
+# SUDO AUTHENTICATION
+# ------------------------------------------------------------------------------
+# Prompt for sudo credentials upfront and keep the session alive for the entire
+# duration of the script, so subsequent sudo calls never prompt mid-run.
+# ------------------------------------------------------------------------------
+
+sudo -v
+while true; do
+  sudo -n true
+  sleep 60
+  kill -0 "$$" || exit
+done 2>/dev/null &
+
+# ------------------------------------------------------------------------------
 # HOMEBREW
 # ------------------------------------------------------------------------------
 # Homebrew is the package manager used to install any other dependency and tool.

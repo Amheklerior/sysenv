@@ -112,7 +112,7 @@ if [ ! -d "$TARGET_DIR" ]; then
     -c url.https://github.com/.insteadOf=git@github.com: \
     --recurse-submodules
 else
-  git -C "$TARGET_DIR" pull
+  git -C "$TARGET_DIR" pull --ff-only
   git -C "$TARGET_DIR" \
     -c url.https://github.com/.insteadOf=git@github.com: \
     submodule update --init --recursive

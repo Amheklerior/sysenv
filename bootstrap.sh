@@ -280,3 +280,29 @@ mkdir -p "$HOME/.config"
 mkdir -p "$HOME/dev/personal"
 
 stow -R -d "$TARGET_DIR/dotfiles" -t "$HOME" home
+
+# ------------------------------------------------------------------------------
+# SYSTEM AND APPS PREFERENCES
+# ------------------------------------------------------------------------------
+# Applies macOS system preferences and scriptable third-party app preferences.
+# Apple apps preferences (Safari, Mail, Notes, etc.) are excluded — they require
+# a SIP disable/enable cycle.
+# ------------------------------------------------------------------------------
+
+PREFS_DIR="$TARGET_DIR/prefs"
+
+# setup macOS system preferences
+bash "$PREFS_DIR/system/macos/osx-prefs.sh"
+
+# setup third-party app preferences
+bash "$PREFS_DIR/apps/alt-tab/alt-tab-settings.sh"
+bash "$PREFS_DIR/apps/keyclu/keyclu-settings.sh"
+bash "$PREFS_DIR/apps/hiddenbar/hiddenbar-settings.sh"
+
+# setup VSCode preferences
+VSCODE_PREFS_PATH="$HOME/Library/Application Support/Code/User"
+mkdir -p "$VSCODE_PREFS_PATH"
+[[ -e "$VSCODE_PREFS_PATH/snippets" ]] && rm -rf "$VSCODE_PREFS_PATH/snippets"
+[[ -e "$VSCODE_PREFS_PATH/keybindings.json" ]] && rm "$VSCODE_PREFS_PATH/keybindings.json"
+[[ -e "$VSCODE_PREFS_PATH/settings.json" ]] && rm "$VSCODE_PREFS_PATH/settings.json"
+stow -d "$PREFS_DIR/apps" -t "$VSCODE_PREFS_PATH" vscode

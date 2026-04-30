@@ -9,7 +9,7 @@ A single-command bootstrap for a complete macOS development environment.
 ## Overview
 
 This is my central hub for managing a full macOS development setup. It ties together dotfiles, shell configuration,
-packages, SSH and GPG keys into a single, automated, idempotent workflow built on top of modular git submodules.
+packages, SSH and GPG keys, and system and app preferences into a single, automated, idempotent workflow built on top of modular git submodules.
 
 ## Quick Start
 
@@ -18,7 +18,7 @@ packages, SSH and GPG keys into a single, automated, idempotent workflow built o
 ```
 
 The script installs Homebrew, authenticates with GitHub, imports my GPG and SSH keys, installs all packages and
-applications from the Brewfile, and symlinks my dotfiles.
+applications from the Brewfile, symlinks my dotfiles, and applies macOS system and app preferences.
 
 ## Repository Structure
 
@@ -28,7 +28,8 @@ sysenv/
 ├── dotfiles/       # my dotfiles (shell, git, nvim, and terminal configs)
 ├── packages/       # my Homebrew Brewfile — CLI tools, apps, and VS Code extensions
 ├── gpg/            # encrypted GPG keys and import automation script
-└── ssh/            # encrypted SSH keys and setup automation script
+├── ssh/            # encrypted SSH keys and setup automation script
+└── prefs/          # macOS system preferences and app settings
 ```
 
 Each subdirectory is a git submodule pointing to its own dedicated repository. This keeps sensitive material

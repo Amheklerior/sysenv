@@ -9,21 +9,58 @@ set -euo pipefail
 TARGET_DIR="$HOME/dev/personal/sysenv"
 
 # ------------------------------------------------------------------------------
+# COLORS & FORMATTING
+# ------------------------------------------------------------------------------
+# Color and style variables for terminal output (when run on interactive shells).
+# ------------------------------------------------------------------------------
+
+if [[ -t 1 ]]; then
+  readonly RED='\033[0;31m'
+  readonly YELLOW='\033[0;33m'
+  readonly GREEN='\033[0;32m'
+  readonly GREY='\033[0;37m'
+  readonly BOLD='\033[1m'
+  readonly RESET='\033[0m'
+else
+  readonly RED='' YELLOW='' GREEN='' GREY='' BOLD='' RESET=''
+fi
+
+# ------------------------------------------------------------------------------
+# LOGGING
+# ------------------------------------------------------------------------------
+# Helpers for consistent, color-coded log output.
+# ------------------------------------------------------------------------------
+
+log() { echo -e "${BOLD}[INFO] $*${RESET}"; }
+trace() { echo -e "${GREY}$*${RESET}"; }
+success() { echo -e "${GREEN}${BOLD}[OK] $*${RESET}"; }
+warn() { echo -e "${YELLOW}${BOLD}[WARN] $*${RESET}" >&2; }
+error() { echo -e "${RED}${BOLD}[ERROR] $*${RESET}" >&2; }
+
+# ------------------------------------------------------------------------------
 # CHECK OS REQUIREMENTS
 # ------------------------------------------------------------------------------
 # This script is intended for macOS systems running on Apple Silicon only.
 # Exits early with an error if the requirements are not met.
 # ------------------------------------------------------------------------------
 
+log "checking system requirements..."
+
 if [ "$(uname -s)" != "Darwin" ]; then
-  echo "Error: This script requires macOS. Detected OS: $(uname -s)" >&2
+  error "This script requires macOS. Detected OS: $(uname -s)"
   exit 1
+else
+  trace "OS check passed."
 fi
 
 if [ "$(uname -m)" != "arm64" ]; then
-  echo "Error: This script requires an Apple Silicon processor. Detected architecture: $(uname -m)" >&2
+  error "This script requires an Apple Silicon processor. Detected architecture: $(uname -m)"
   exit 1
+else
+  trace "Architecture check passed."
 fi
+
+success "Running on a MacOS system with Apple Silicon architecture!"
 
 # ------------------------------------------------------------------------------
 # SUDO AUTHENTICATION
@@ -31,6 +68,14 @@ fi
 # Prompt for sudo credentials upfront and keep the session alive for the entire
 # duration of the script, so subsequent sudo calls never prompt mid-run.
 # ------------------------------------------------------------------------------
+
+log "Requesting sudo credentials..."
+trace "The bootstrap script requires sudo priviledges for things like:"
+trace "   - installing homebrew and some applications"
+trace "   - setup zsh as the default shell"
+trace "   - setup touch-id for sudo access"
+trace "   - setup broad system preferences"
+trace "   - etc..."
 
 sudo -v
 while true; do
@@ -50,13 +95,18 @@ done 2>/dev/null &
 
 # install homebrew
 if ! command -v brew &>/dev/null; then
+  log "Installing Homebrew..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   eval "$(/opt/homebrew/bin/brew shellenv)"
+  success "Homebrew installed."
+else
+  trace "Homebrew already installed."
 fi
 
 # disable homebrew analytics
 if ! brew analytics state | grep -q "disabled"; then
   brew analytics off
+  trace "disabled homebrew analytics"
 fi
 
 # ------------------------------------------------------------------------------
@@ -68,7 +118,7 @@ fi
 #   - stow:   symlink farm manager, used to link dotfiles into $HOME.
 # ------------------------------------------------------------------------------
 
-# install dependencies
+trace "Installing script dependencies..."
 brew install gh gnupg stow
 
 # ------------------------------------------------------------------------------
@@ -88,7 +138,11 @@ brew install gh gnupg stow
 
 # authenticate my Github account
 if ! gh auth status &>/dev/null; then
+  log "GitHub authentication required..."
   gh auth login
+  success "GitHub authenticated."
+else
+  trace "GitHub already authenticated."
 fi
 
 # ------------------------------------------------------------------------------
@@ -107,11 +161,15 @@ fi
 
 # cloning or updating dev env repo
 if [ ! -d "$TARGET_DIR" ]; then
+  log "Cloning the 'sysenv' repository..."
   mkdir -p "$(dirname "$TARGET_DIR")"
   gh repo clone Amheklerior/sysenv "$TARGET_DIR" -- \
     -c url.https://github.com/.insteadOf=git@github.com: \
     --recurse-submodules
+  success "Repository cloned."
 else
+  log "Repo 'sysenv' already present."
+  trace "Updating repository..."
   git -C "$TARGET_DIR" pull --ff-only
   git -C "$TARGET_DIR" \
     -c url.https://github.com/.insteadOf=git@github.com: \
@@ -122,15 +180,22 @@ fi
 # GPG KEYS SETUP
 # ------------------------------------------------------------------------------
 
-bash "$TARGET_DIR/gpg/setup.sh"
+log "Setting up GPG keys..."
+trace "You'll be prompted for the GPG encryption passphrace..."
+
+bash "$TARGET_DIR/gpg/setup.sh" && success "GPG keys configured."
 
 # ------------------------------------------------------------------------------
 # SSH KEYS SETUP
 # ------------------------------------------------------------------------------
 
-bash "$TARGET_DIR/ssh/setup.sh"
+log "Setting up SSH keys..."
+trace "You'll be prompted for the master GPG key passphrace..."
+
+bash "$TARGET_DIR/ssh/setup.sh" && success "SSH keys configured."
 
 # check ssh access
+trace "Verifying SSH access to GitHub..."
 ssh -T git@github.com || true
 
 # ------------------------------------------------------------------------------
@@ -143,6 +208,7 @@ ssh -T git@github.com || true
 #  execution was, allowing for cleaner git commands (avoiding the noisy -C opt).
 # ------------------------------------------------------------------------------
 
+log "Switching repository remotes to SSH protocol..."
 SYSENV_SSH_URL="git@github.com:Amheklerior/sysenv.git"
 
 pushd "$TARGET_DIR"
@@ -160,6 +226,7 @@ git submodule foreach --recursive '
 '
 
 # check remotes are now using SSH
+trace "Repository remotes are now:"
 git remote get-url origin
 git submodule foreach --recursive 'git remote get-url origin'
 
@@ -182,12 +249,17 @@ export HOMEBREW_CASK_OPTS="--no-quarantine"
 mkdir -p "$(dirname "$HOMEBREW_BUNDLE_FILE_GLOBAL")"
 
 # symlink the Brewfile bundle to be globally available
+trace "Symlinking the Brewfile to $HOMEBREW_BUNDLE_FILE_GLOBAL"
 ln -sf "$TARGET_DIR/packages/Brewfile" "$HOMEBREW_BUNDLE_FILE_GLOBAL"
 
 # install all packages, application, and vscode extensions from the bundle
 if ! brew bundle check --global; then
-  brew bundle install --global --verbose || :
+  log "Installing missing packages from Brewfile..."
+  brew bundle install --global --verbose ||
+    warn "Some packages failed to install, continuing..."
 fi
+
+success "Packages installed."
 
 # ------------------------------------------------------------------------------
 # SETUP SHELL
@@ -201,20 +273,27 @@ fi
 #
 # ------------------------------------------------------------------------------
 
+log "Configuring Zsh as the default shell..."
+
 # set ZSH as the default system shell
 if ! grep -Fxq "$(brew --prefix)/bin/zsh" /etc/shells; then
+  trace "setting ZSH as the default system shell"
   echo "$(brew --prefix)/bin/zsh" | sudo tee -a /etc/shells >/dev/null
 fi
 
 # set ZSH as the default login shell
 if ! [ "$SHELL" = "$(brew --prefix)/bin/zsh" ]; then
+  trace "setting ZSH as the default login shell"
   chsh -s "$(brew --prefix)/bin/zsh"
 fi
 
 # update `sh` symlink to point to zsh instead of bash
 if ! sh --version | grep -q zsh; then
+  trace "switch the '/var/select/sh' symlink to '/bin/zsh' over '/bin/bash'"
   sudo ln -sfv /bin/zsh /var/select/sh
 fi
+
+success "Zsh configured as the default shell."
 
 # ------------------------------------------------------------------------------
 # INSTALL ZSH PLUGINS
@@ -230,12 +309,18 @@ fi
 #
 # ------------------------------------------------------------------------------
 
+log "Installing Zsh plugins..."
+
 ZSH_PLUGINS_DIR="$HOME/.config/plugins"
 mkdir -p "$ZSH_PLUGINS_DIR"
 
 if [ ! -d "$ZSH_PLUGINS_DIR/fzf-tab" ]; then
   git clone --depth 1 https://github.com/Aloxaf/fzf-tab.git "$ZSH_PLUGINS_DIR/fzf-tab"
+else
+  trace "Repo Aloxaf/fzf-tab already present."
 fi
+
+success "Zsh plugins installed."
 
 # ------------------------------------------------------------------------------
 # BACKUP PRE-EXISTING DOTFILES
@@ -272,6 +357,7 @@ for f in "${DOTFILES_FILES[@]}"; do
   if [ -e "$HOME/$f" ] && [ ! -L "$HOME/$f" ]; then
     mkdir -p "$(dirname "$DOTFILES_BACKUP_DIR/$f")"
     mv "$HOME/$f" "$DOTFILES_BACKUP_DIR/$f"
+    warn "Backed up ~/$f → $DOTFILES_BACKUP_DIR/$f"
   fi
 done
 
@@ -279,6 +365,7 @@ for d in "${DOTFILES_DIRS[@]}"; do
   if [ -d "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
     mkdir -p "$DOTFILES_BACKUP_DIR/$d"
     mv "$HOME/$d" "$DOTFILES_BACKUP_DIR/$d"
+    warn "Backed up ~/$d → $DOTFILES_BACKUP_DIR/$d"
   fi
 done
 
@@ -291,10 +378,14 @@ done
 # the entire `~/.config/` dir. Same goes for the `~/dev/personal/` dir.
 # ------------------------------------------------------------------------------
 
+log "Linking dotfiles..."
+
 mkdir -p "$HOME/.config"
 mkdir -p "$HOME/dev/personal"
 
 stow -R -d "$TARGET_DIR/dotfiles" -t "$HOME" home
+
+success "Dotfiles linked."
 
 # ------------------------------------------------------------------------------
 # TOUCH ID SUDO SETUP
@@ -311,20 +402,30 @@ PAM_TID_LINE="auth       sufficient     pam_tid.so"
 SUDO_LOCAL="/etc/pam.d/sudo_local"
 
 if ioreg -c AppleEmbeddedTouchIDDevice | grep -q "AppleEmbeddedTouchIDDevice"; then
+  log "Enabling Touch ID for sudo..."
+
   # create the `sudo_local` file if doesn't exist (use the template if present)
   if [ ! -f "$SUDO_LOCAL" ] && [ -f "${SUDO_LOCAL}.template" ]; then
+    trace "$SUDO_LOCAL file not found. Creating it from template..."
     sudo cp "${SUDO_LOCAL}.template" "$SUDO_LOCAL"
   elif [ ! -f "$SUDO_LOCAL" ]; then
+    trace "$SUDO_LOCAL file not found. Creating it from scratch..."
     sudo touch "$SUDO_LOCAL"
   fi
 
   # add touch-id authorization for sudo rights
   if ! grep -qF "$PAM_TID_LINE" "$SUDO_LOCAL"; then
     echo "$PAM_TID_LINE" | sudo tee -a "$SUDO_LOCAL" >/dev/null
+  else
+    trace "Touch ID already enabled for sudo."
   fi
 
   # allow touch-id for sudo to work even during Apple Remote Desktop sessions
   defaults write com.apple.security.authorization ignoreArd -bool true
+
+  success "Touch ID for sudo enabled."
+else
+  warn "Touch ID hardware not detected, skipping."
 fi
 
 # ------------------------------------------------------------------------------
@@ -338,17 +439,32 @@ fi
 PREFS_DIR="$TARGET_DIR/prefs"
 
 # setup macOS system preferences
-bash "$PREFS_DIR/system/macos/osx-prefs.sh"
+log "Applying system preferences..."
+
+bash "$PREFS_DIR/system/macos/osx-prefs.sh" && success "System preferences applied."
 
 # setup third-party app preferences
-bash "$PREFS_DIR/apps/alt-tab/alt-tab-settings.sh"
-bash "$PREFS_DIR/apps/keyclu/keyclu-settings.sh"
-bash "$PREFS_DIR/apps/hiddenbar/hiddenbar-settings.sh"
+log "Applying app preferences..."
+
+bash "$PREFS_DIR/apps/alt-tab/alt-tab-settings.sh" && trace "Applied Alt-Tab prefs."
+bash "$PREFS_DIR/apps/keyclu/keyclu-settings.sh" && trace "Applied Key-Clu prefs."
+bash "$PREFS_DIR/apps/hiddenbar/hiddenbar-settings.sh" && trace "Applied HiddenBar prefs."
 
 # setup VSCode preferences
 VSCODE_PREFS_PATH="$HOME/Library/Application Support/Code/User"
 mkdir -p "$VSCODE_PREFS_PATH"
-[[ -e "$VSCODE_PREFS_PATH/snippets" ]] && rm -rf "$VSCODE_PREFS_PATH/snippets"
-[[ -e "$VSCODE_PREFS_PATH/keybindings.json" ]] && rm "$VSCODE_PREFS_PATH/keybindings.json"
-[[ -e "$VSCODE_PREFS_PATH/settings.json" ]] && rm "$VSCODE_PREFS_PATH/settings.json"
-stow -d "$PREFS_DIR/apps" -t "$VSCODE_PREFS_PATH" vscode
+[[ -e "$VSCODE_PREFS_PATH/snippets" ]] && rm -rf "$VSCODE_PREFS_PATH/snippets" && warn "removed $VSCODE_PREFS_PATH/snippets/"
+[[ -e "$VSCODE_PREFS_PATH/keybindings.json" ]] && rm "$VSCODE_PREFS_PATH/keybindings.json" && warn "Removed $VSCODE_PREFS_PATH/keybindings.json"
+[[ -e "$VSCODE_PREFS_PATH/settings.json" ]] && rm "$VSCODE_PREFS_PATH/settings.json" && warn "Removed $VSCODE_PREFS_PATH/settings.json"
+stow -d "$PREFS_DIR/apps" -t "$VSCODE_PREFS_PATH" vscode && trace "Applied VSCode prefs."
+
+success "App preferences applied."
+
+# ------------------------------------------------------------------------------
+# THE END
+# ------------------------------------------------------------------------------
+# ...and they lived happily ever after!
+# ------------------------------------------------------------------------------
+
+success "🤘 Bootstrap complete!"
+trace "Restart the system to apply all changes."

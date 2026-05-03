@@ -84,6 +84,10 @@ while true; do
   kill -0 "$$" || exit
 done 2>/dev/null &
 
+# kill background process immediately when main script exits
+SUDO_KEEPALIVE_PID=$!
+trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null' EXIT
+
 # ------------------------------------------------------------------------------
 # HOMEBREW
 # ------------------------------------------------------------------------------

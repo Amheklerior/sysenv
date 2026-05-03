@@ -420,9 +420,6 @@ if ioreg -c AppleEmbeddedTouchIDDevice | grep -q "AppleEmbeddedTouchIDDevice"; t
     trace "Touch ID already enabled for sudo."
   fi
 
-  # allow touch-id for sudo to work even during Apple Remote Desktop sessions
-  defaults write com.apple.security.authorization ignoreArd -bool true
-
   success "Touch ID for sudo enabled."
 else
   warn "Touch ID hardware not detected, skipping."

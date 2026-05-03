@@ -70,7 +70,7 @@ success "Running on a MacOS system with Apple Silicon architecture!"
 # ------------------------------------------------------------------------------
 
 log "Requesting sudo credentials..."
-trace "The bootstrap script requires sudo priviledges for things like:"
+trace "The bootstrap script requires sudo privileges for things like:"
 trace "   - installing homebrew and some applications"
 trace "   - setup zsh as the default shell"
 trace "   - setup touch-id for sudo access"
@@ -149,8 +149,8 @@ fi
 # REPOSITORY SETUP
 # ------------------------------------------------------------------------------
 # Clones my development environment repo into the new machine, including its
-# submodules (--recurse-submodule). In case the repo already exists, just update
-# with the latest changes, making sure to also update its submodule.
+# submodules (--recurse-submodules). In case the repo already exists, just update
+# with the latest changes, making sure to also update its submodules.
 #
 # NOTE: the -c url...insteadOf flag rewrites SSH URLs (git@github.com:) to HTTPS
 #   (https://github.com/) on the fly. This is necessary because submodule URLs are
@@ -181,7 +181,7 @@ fi
 # ------------------------------------------------------------------------------
 
 log "Setting up GPG keys..."
-trace "You'll be prompted for the GPG encryption passphrace..."
+trace "You'll be prompted for the GPG encryption passphrase..."
 
 bash "$TARGET_DIR/gpg/setup.sh" && success "GPG keys configured."
 
@@ -190,7 +190,7 @@ bash "$TARGET_DIR/gpg/setup.sh" && success "GPG keys configured."
 # ------------------------------------------------------------------------------
 
 log "Setting up SSH keys..."
-trace "You'll be prompted for the master GPG key passphrace..."
+trace "You'll be prompted for the master GPG key passphrase..."
 
 bash "$TARGET_DIR/ssh/setup.sh" && success "SSH keys configured."
 
@@ -216,7 +216,7 @@ pushd "$TARGET_DIR"
 # switch parent repo remote to SSH
 git remote set-url origin "$SYSENV_SSH_URL"
 
-# update the .git/config submodule URLs with those specified in .gitsubmodule
+# update the .git/config submodule URLs with those specified in .gitmodules
 git submodule sync --recursive
 
 # switch each submodule's own remote to SSH
@@ -268,7 +268,7 @@ success "Packages installed."
 # /var/select/sh symlink so that `sh` resolves to zsh system-wide.
 #
 # NOTE: the /var/select/sh symlink intentionally points to Apple's system zsh
-#   (/bin/zsh), not Homebrew's. This is becaude that symlink is resolved at early
+#   (/bin/zsh), not Homebrew's. This is because that symlink is resolved at early
 #   boot before Homebrew paths are available.
 #
 # ------------------------------------------------------------------------------
@@ -332,7 +332,7 @@ success "Zsh plugins installed."
 
 DOTFILES_BACKUP_DIR="$HOME/.dotbak/$(date +%Y%m%d_%H%M%S)"
 
-# these are the actual dot-files that will be symlinekd with stow
+# these are the actual dot-files that will be symlinked with stow
 DOTFILES_FILES=(
   ".gitconfig"
   ".zalias"

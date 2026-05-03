@@ -187,7 +187,11 @@ fi
 log "Setting up GPG keys..."
 trace "You'll be prompted for the GPG encryption passphrase..."
 
-bash "$TARGET_DIR/gpg/setup.sh" && success "GPG keys configured."
+bash "$TARGET_DIR/gpg/setup.sh" || {
+  error "GPG setup failed."
+  exit 1
+}
+success "GPG keys configured."
 
 # ------------------------------------------------------------------------------
 # SSH KEYS SETUP
@@ -197,7 +201,10 @@ log "Setting up SSH keys..."
 trace "You'll be prompted for the master GPG key passphrase..."
 
 # setup ssh keys
-bash "$TARGET_DIR/ssh/setup.sh"
+bash "$TARGET_DIR/ssh/setup.sh" || {
+  error "SSH setup failed."
+  exit 1
+}
 
 # check ssh access
 gh_auth_output=$(ssh -T git@github.com 2>&1 || true)
@@ -387,7 +394,7 @@ done
 
 for d in "${DOTFILES_DIRS[@]}"; do
   if [ -d "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
-    mkdir -p "$DOTFILES_BACKUP_DIR/$d"
+    mkdir -p "$(dirname "$DOTFILES_BACKUP_DIR/$d")"
     mv "$HOME/$d" "$DOTFILES_BACKUP_DIR/$d"
     warn "Backed up ~/$d → $DOTFILES_BACKUP_DIR/$d"
   fi
@@ -462,17 +469,24 @@ PREFS_DIR="$TARGET_DIR/prefs"
 # setup macOS system preferences
 log "Applying system preferences..."
 
-bash "$PREFS_DIR/system/macos/osx-prefs.sh" && success "System preferences applied."
+bash "$PREFS_DIR/system/macos/osx-prefs.sh" &&
+  success "System preferences applied." ||
+  error "Failed to apply system preferences."
 
 # setup third-party app preferences
 log "Applying app preferences..."
 
 bash "$PREFS_DIR/apps/alt-tab/alt-tab-settings.sh" &&
-  trace "Applied Alt-Tab prefs." || error "Failed to apply Alt-Tab prefs."
+  trace "Applied Alt-Tab prefs." ||
+  error "Failed to apply Alt-Tab prefs."
+
 bash "$PREFS_DIR/apps/keyclu/keyclu-settings.sh" &&
-  trace "Applied Key-Clu prefs." || error "Failed to apply Key-Clu prefs."
+  trace "Applied Key-Clu prefs." ||
+  error "Failed to apply Key-Clu prefs."
+
 bash "$PREFS_DIR/apps/hiddenbar/hiddenbar-settings.sh" &&
-  trace "Applied HiddenBar prefs." || error "Failed to apply HiddenBar prefs."
+  trace "Applied HiddenBar prefs." ||
+  error "Failed to apply HiddenBar prefs."
 
 # setup VSCode preferences
 VSCODE_PREFS_PATH="$HOME/Library/Application Support/Code/User"
@@ -480,8 +494,10 @@ mkdir -p "$VSCODE_PREFS_PATH"
 [[ -e "$VSCODE_PREFS_PATH/snippets" ]] && rm -rf "$VSCODE_PREFS_PATH/snippets" && warn "removed $VSCODE_PREFS_PATH/snippets/"
 [[ -e "$VSCODE_PREFS_PATH/keybindings.json" ]] && rm "$VSCODE_PREFS_PATH/keybindings.json" && warn "Removed $VSCODE_PREFS_PATH/keybindings.json"
 [[ -e "$VSCODE_PREFS_PATH/settings.json" ]] && rm "$VSCODE_PREFS_PATH/settings.json" && warn "Removed $VSCODE_PREFS_PATH/settings.json"
+
 stow -d "$PREFS_DIR/apps" -t "$VSCODE_PREFS_PATH" vscode &&
-  trace "Applied VSCode prefs." || error "Failed to apply VSCode prefs."
+  trace "Applied VSCode prefs." ||
+  error "Failed to apply VSCode prefs."
 
 success "App preferences applied."
 

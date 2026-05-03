@@ -196,11 +196,18 @@ bash "$TARGET_DIR/gpg/setup.sh" && success "GPG keys configured."
 log "Setting up SSH keys..."
 trace "You'll be prompted for the master GPG key passphrase..."
 
-bash "$TARGET_DIR/ssh/setup.sh" && success "SSH keys configured."
+# setup ssh keys
+bash "$TARGET_DIR/ssh/setup.sh"
 
 # check ssh access
-trace "Verifying SSH access to GitHub..."
-ssh -T git@github.com || true
+if ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+  error "SSH connection to GitHub failed. Check your SSH keys and run again."
+  exit 1
+else
+  trace "SSH connection to GitHub verified."
+fi
+
+success "SSH keys configured."
 
 # ------------------------------------------------------------------------------
 # SWITCH REPO GIT PROTOCOL
@@ -229,10 +236,14 @@ git submodule foreach --recursive '
   git remote set-url origin "$ssh_url"
 '
 
-# check remotes are now using SSH
-trace "Repository remotes are now:"
-git remote get-url origin
-git submodule foreach --recursive 'git remote get-url origin'
+# verify all remotes are now using SSH
+if git remote get-url origin | grep -q "^https://" ||
+  git submodule foreach --recursive 'git remote get-url origin' | grep -q "^https://"; then
+  error "The HTTPS->SSH protocol switch failed. One or more remotes are still using HTTPS protocol."
+  exit 1
+else
+  success "All remotes switched from using HTTPS to using SSH."
+fi
 
 popd
 

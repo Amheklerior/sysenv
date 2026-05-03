@@ -200,7 +200,8 @@ trace "You'll be prompted for the master GPG key passphrase..."
 bash "$TARGET_DIR/ssh/setup.sh"
 
 # check ssh access
-if ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+gh_auth_output=$(ssh -T git@github.com 2>&1 || true)
+if ! echo "$gh_auth_output" | grep -q "successfully authenticated"; then
   error "SSH connection to GitHub failed. Check your SSH keys and run again."
   exit 1
 else

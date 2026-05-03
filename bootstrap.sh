@@ -447,9 +447,12 @@ bash "$PREFS_DIR/system/macos/osx-prefs.sh" && success "System preferences appli
 # setup third-party app preferences
 log "Applying app preferences..."
 
-bash "$PREFS_DIR/apps/alt-tab/alt-tab-settings.sh" && trace "Applied Alt-Tab prefs."
-bash "$PREFS_DIR/apps/keyclu/keyclu-settings.sh" && trace "Applied Key-Clu prefs."
-bash "$PREFS_DIR/apps/hiddenbar/hiddenbar-settings.sh" && trace "Applied HiddenBar prefs."
+bash "$PREFS_DIR/apps/alt-tab/alt-tab-settings.sh" &&
+  trace "Applied Alt-Tab prefs." || error "Failed to apply Alt-Tab prefs."
+bash "$PREFS_DIR/apps/keyclu/keyclu-settings.sh" &&
+  trace "Applied Key-Clu prefs." || error "Failed to apply Key-Clu prefs."
+bash "$PREFS_DIR/apps/hiddenbar/hiddenbar-settings.sh" &&
+  trace "Applied HiddenBar prefs." || error "Failed to apply HiddenBar prefs."
 
 # setup VSCode preferences
 VSCODE_PREFS_PATH="$HOME/Library/Application Support/Code/User"
@@ -457,7 +460,8 @@ mkdir -p "$VSCODE_PREFS_PATH"
 [[ -e "$VSCODE_PREFS_PATH/snippets" ]] && rm -rf "$VSCODE_PREFS_PATH/snippets" && warn "removed $VSCODE_PREFS_PATH/snippets/"
 [[ -e "$VSCODE_PREFS_PATH/keybindings.json" ]] && rm "$VSCODE_PREFS_PATH/keybindings.json" && warn "Removed $VSCODE_PREFS_PATH/keybindings.json"
 [[ -e "$VSCODE_PREFS_PATH/settings.json" ]] && rm "$VSCODE_PREFS_PATH/settings.json" && warn "Removed $VSCODE_PREFS_PATH/settings.json"
-stow -d "$PREFS_DIR/apps" -t "$VSCODE_PREFS_PATH" vscode && trace "Applied VSCode prefs."
+stow -d "$PREFS_DIR/apps" -t "$VSCODE_PREFS_PATH" vscode &&
+  trace "Applied VSCode prefs." || error "Failed to apply VSCode prefs."
 
 success "App preferences applied."
 

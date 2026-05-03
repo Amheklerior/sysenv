@@ -317,7 +317,8 @@ success "Zsh configured as the default shell."
 # by Homebrew. Plugins are cloned into ~/.config/plugins/ (matching the
 # SHELL_PLUGINS path defined in .zshenv).
 #
-# - fzf-tab: replaces zsh's default completion menu with fzf-powered fuzzy search
+# Plugins to install are listed in the PLUGINS array below:
+#   - fzf-tab: replaces zsh's default completion menu with fzf-powered fuzzy search
 #
 # NOTE: --depth 1 fetches only the latest commit, skipping full history since
 #   we only need the working tree of a third-party plugin, not its git history.
@@ -326,14 +327,21 @@ success "Zsh configured as the default shell."
 
 log "Installing Zsh plugins..."
 
+PLUGINS=(
+  "Aloxaf/fzf-tab"
+)
+
 ZSH_PLUGINS_DIR="$HOME/.config/plugins"
 mkdir -p "$ZSH_PLUGINS_DIR"
 
-if [ ! -d "$ZSH_PLUGINS_DIR/fzf-tab" ]; then
-  git clone --depth 1 https://github.com/Aloxaf/fzf-tab.git "$ZSH_PLUGINS_DIR/fzf-tab"
-else
-  trace "Repo Aloxaf/fzf-tab already present."
-fi
+for plugin in "${PLUGINS[@]}"; do
+  repo="$(basename "$plugin")"
+  if [ ! -d "$ZSH_PLUGINS_DIR/$repo" ]; then
+    git clone --depth 1 "https://github.com/${plugin}.git" "$ZSH_PLUGINS_DIR/$repo"
+  else
+    trace "Repo $plugin already present."
+  fi
+done
 
 success "Zsh plugins installed."
 

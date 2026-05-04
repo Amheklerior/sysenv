@@ -153,13 +153,22 @@ fi
 # REPOSITORY SETUP
 # ------------------------------------------------------------------------------
 # Clones my development environment repo into the new machine, including its
-# submodules (--recurse-submodules). In case the repo already exists, just update
-# with the latest changes, making sure to also update its submodules.
+# submodules. In case the repo already exists, just update it with the latest
+# changes, making sure to also update its submodules.
 #
 # NOTE: the -c url...insteadOf flag rewrites SSH URLs (git@github.com:) to HTTPS
 #   (https://github.com/) on the fly. This is necessary because submodule URLs are
 #   set in .gitmodules using SSH, which requires SSH keys that are not configured
 #   yet. The flag is temporary and does not persist to the git config.
+#
+# NOTE: GH_CRED_HELPER holds inline git credential helper, to force git use GitHub
+#   authentication credentials after login. I originally tried simply calling
+#   `gh auth setup-git` to temporarily configure a `.gitconfig` file with the
+#   credentials. In practice it was unreliable as the stored token was either
+#   not accessible yet or returned in an invalid format. GH_CRED_HELPER bypasses
+#   the credential store entirely by fetching the token directly from
+#   `gh auth token` at lookup time. Single quotes prevents premature evaluation
+#   of the token.
 #
 # ------------------------------------------------------------------------------
 
@@ -167,18 +176,23 @@ fi
 if [ ! -d "$TARGET_DIR" ]; then
   log "Cloning the 'sysenv' repository..."
   mkdir -p "$(dirname "$TARGET_DIR")"
-  gh repo clone Amheklerior/sysenv "$TARGET_DIR" -- \
-    -c url.https://github.com/.insteadOf=git@github.com: \
-    --recurse-submodules
-  success "Repository cloned."
+  git clone https://github.com/Amheklerior/sysenv.git "$TARGET_DIR"
 else
-  log "Repo 'sysenv' already present."
-  trace "Updating repository..."
+  log "Repo 'sysenv' already present. Updating..."
   git -C "$TARGET_DIR" pull --ff-only
-  git -C "$TARGET_DIR" \
-    -c url.https://github.com/.insteadOf=git@github.com: \
-    submodule update --init --recursive
 fi
+
+GH_CRED_HELPER='!printf "username=x-access-token\npassword=$(gh auth token)\n"'
+
+# clone/update repo submodules
+git -C "$TARGET_DIR" \
+  -c "url.https://github.com/.insteadOf=git@github.com:" \
+  -c "credential.https://github.com.helper=${GH_CRED_HELPER}" \
+  submodule update --init --recursive
+
+unset GH_CRED_HELPER
+
+success "Repository ready."
 
 # ------------------------------------------------------------------------------
 # GPG KEYS SETUP

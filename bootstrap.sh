@@ -446,7 +446,7 @@ success "Dotfiles linked."
 PAM_TID_LINE="auth       sufficient     pam_tid.so"
 SUDO_LOCAL="/etc/pam.d/sudo_local"
 
-if ioreg -c AppleEmbeddedTouchIDDevice | grep -q "AppleEmbeddedTouchIDDevice"; then
+if hidutil list 2>/dev/null | grep -qi "Apple Internal Keyboard"; then
   log "Enabling Touch ID for sudo..."
 
   # create the `sudo_local` file if doesn't exist (use the template if present)

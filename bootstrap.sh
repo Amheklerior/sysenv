@@ -381,7 +381,6 @@ DOTFILES_BACKUP_DIR="$HOME/.dotbak/$(date +%Y%m%d_%H%M%S)"
 DOTFILES_FILES=(
   ".gitconfig"
   ".zalias"
-  ".zprofile"
   ".zshenv"
   ".zshrc"
   ".config/starship.toml"

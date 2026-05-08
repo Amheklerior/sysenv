@@ -249,7 +249,6 @@ heading "Dotfiles"
 dotfiles_files=(
   ".gitconfig"
   ".zalias"
-  ".zprofile"
   ".zshenv"
   ".zshrc"
   ".config/starship.toml"

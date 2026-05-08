@@ -93,11 +93,13 @@ else
   ok "${BLUE}~/.config/homebrew/Brewfile${RESET} ${PURPLE}→ $(readlink "$brewfile")${RESET}"
   info "Running brew bundle check (this may take a moment)..."
 
+  brew upgrade &>/dev/null && mas upgrade &>/dev/null
+
   if brew bundle check --global &>/dev/null; then
     ok "All packages installed (Brewfile satisfied)"
   else
     fail "Some packages are missing:"
-    brew bundle check --global --verbose 2>&1 | grep "^x " | while IFS= read -r pkg; do
+    brew bundle check --global --verbose 2>&1 | grep "^→ " | while IFS= read -r pkg; do
       echo "        $pkg"
     done
   fi

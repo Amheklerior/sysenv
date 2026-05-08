@@ -438,6 +438,10 @@ check_default "com.apple.screencapture" "location" "$HOME/Desktop" "Screenshots:
 check_default "com.apple.screencapture" "include-date" "1" "Screenshots: date included in filename"
 check_default "com.apple.screencapture" "disable-shadow" "1" "Screenshots: shadow disabled"
 
+# No widgets
+check_default "com.apple.WindowManager" "StandardHideWidgets" "true" "Widget: disabled in desktop"
+check_default "com.apple.WindowManager" "StageManagerHideWidgets" "true" "Widget: disabled in stage manager"
+
 # Siri
 check_default "com.apple.assistant.support" "Assistant Enabled" "0" "Siri: disabled"
 check_default "com.apple.Siri" "StatusMenuVisible" "0" "Siri: status menu hidden"

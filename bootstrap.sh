@@ -470,6 +470,19 @@ else
 fi
 
 # ------------------------------------------------------------------------------
+# WORK ENV SETUP
+# ------------------------------------------------------------------------------
+
+log "Setting up work environment..."
+trace "You'll be prompted for the GPG encryption passphrase..."
+
+bash "$TARGET_DIR/work/setup.sh" || {
+  error "Work environment setup failed."
+  exit 1
+}
+success "Work environment is configured."
+
+# ------------------------------------------------------------------------------
 # THE END
 # ------------------------------------------------------------------------------
 # ...and they lived happily ever after!

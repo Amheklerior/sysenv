@@ -15,12 +15,12 @@ TARGET_DIR="$HOME/dev/personal/sysenv"
 # ------------------------------------------------------------------------------
 
 if [[ -t 1 ]]; then
-  readonly RED='\033[0;31m'
-  readonly YELLOW='\033[0;33m'
-  readonly GREEN='\033[0;32m'
-  readonly GREY='\033[0;37m'
-  readonly BOLD='\033[1m'
-  readonly RESET='\033[0m'
+  readonly RED=$'\033[0;31m'
+  readonly YELLOW=$'\033[0;33m'
+  readonly GREEN=$'\033[0;32m'
+  readonly GREY=$'\033[0;37m'
+  readonly BOLD=$'\033[1m'
+  readonly RESET=$'\033[0m'
 else
   readonly RED='' YELLOW='' GREEN='' GREY='' BOLD='' RESET=''
 fi
@@ -36,6 +36,46 @@ trace() { echo -e "${GREY}$*${RESET}"; }
 success() { echo -e "${GREEN}${BOLD}[OK] $*${RESET}"; }
 warn() { echo -e "${YELLOW}${BOLD}[WARN] $*${RESET}" >&2; }
 error() { echo -e "${RED}${BOLD}[ERROR] $*${RESET}" >&2; }
+
+# ------------------------------------------------------------------------------
+# PARSE FLAGS
+# ------------------------------------------------------------------------------
+# Reads optional flags passed to the bootstrap script and sets up env variables.
+# ------------------------------------------------------------------------------
+
+usage() {
+  cat <<EOF
+${BOLD}Usage:${RESET} $(basename "$0") [OPTIONS]
+
+Bootstrap a new macOS machine with the full development environment.
+
+${BOLD}Options:${RESET}
+  ${BOLD}--use-local-repo${RESET}   Skip cloning/updating the repo and switching its remotes to SSH.
+                     Use this when the repository is already present at $TARGET_DIR.
+  ${BOLD}-h, --help${RESET}         Show this help message and exit
+EOF
+}
+
+USE_LOCAL_REPO=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  --use-local-repo)
+    USE_LOCAL_REPO=1
+    shift
+    ;;
+  *)
+    warn "Unknown flag: $1. Ignored."
+    shift
+    ;;
+  esac
+done
+
+readonly USE_LOCAL_REPO
 
 # ------------------------------------------------------------------------------
 # CHECK OS REQUIREMENTS
@@ -172,27 +212,31 @@ fi
 #
 # ------------------------------------------------------------------------------
 
-# cloning or updating dev env repo
-if [ ! -d "$TARGET_DIR" ]; then
-  log "Cloning the 'sysenv' repository..."
-  mkdir -p "$(dirname "$TARGET_DIR")"
-  git clone https://github.com/Amheklerior/sysenv.git "$TARGET_DIR"
+if ((USE_LOCAL_REPO)); then
+  trace "Using local repository (--use-local-repo); skipping clone/update."
 else
-  log "Repo 'sysenv' already present. Updating..."
-  git -C "$TARGET_DIR" pull --ff-only
+  # cloning or updating dev env repo
+  if [ ! -d "$TARGET_DIR" ]; then
+    log "Cloning the 'sysenv' repository..."
+    mkdir -p "$(dirname "$TARGET_DIR")"
+    git clone https://github.com/Amheklerior/sysenv.git "$TARGET_DIR"
+  else
+    log "Repo 'sysenv' already present. Updating..."
+    git -C "$TARGET_DIR" pull --ff-only
+  fi
+
+  GH_CRED_HELPER='!printf "username=x-access-token\npassword=$(gh auth token)\n"'
+
+  # clone/update repo submodules
+  git -C "$TARGET_DIR" \
+    -c "url.https://github.com/.insteadOf=git@github.com:" \
+    -c "credential.https://github.com.helper=${GH_CRED_HELPER}" \
+    submodule update --init --recursive
+
+  unset GH_CRED_HELPER
+
+  success "Repository ready."
 fi
-
-GH_CRED_HELPER='!printf "username=x-access-token\npassword=$(gh auth token)\n"'
-
-# clone/update repo submodules
-git -C "$TARGET_DIR" \
-  -c "url.https://github.com/.insteadOf=git@github.com:" \
-  -c "credential.https://github.com.helper=${GH_CRED_HELPER}" \
-  submodule update --init --recursive
-
-unset GH_CRED_HELPER
-
-success "Repository ready."
 
 # ------------------------------------------------------------------------------
 # GPG KEYS SETUP
@@ -241,33 +285,37 @@ success "SSH keys configured."
 #  execution was, allowing for cleaner git commands (avoiding the noisy -C opt).
 # ------------------------------------------------------------------------------
 
-log "Switching repository remotes to SSH protocol..."
-SYSENV_SSH_URL="git@github.com:Amheklerior/sysenv.git"
-
-pushd "$TARGET_DIR"
-
-# switch parent repo remote to SSH
-git remote set-url origin "$SYSENV_SSH_URL"
-
-# update the .git/config submodule URLs with those specified in .gitmodules
-git submodule sync --recursive
-
-# switch each submodule's own remote to SSH
-git submodule foreach --recursive '
-  ssh_url="$(git config --file "$toplevel/.gitmodules" "submodule.$name.url")"
-  git remote set-url origin "$ssh_url"
-'
-
-# verify all remotes are now using SSH
-if git remote get-url origin | grep -q "^https://" ||
-  git submodule foreach --recursive 'git remote get-url origin' | grep -q "^https://"; then
-  error "The HTTPS->SSH protocol switch failed. One or more remotes are still using HTTPS protocol."
-  exit 1
+if ((USE_LOCAL_REPO)); then
+  trace "Using local repository (--use-local-repo); skipping HTTPS→SSH protocol switch."
 else
-  success "All remotes switched from using HTTPS to using SSH."
-fi
+  log "Switching repository remotes to SSH protocol..."
+  SYSENV_SSH_URL="git@github.com:Amheklerior/sysenv.git"
 
-popd
+  pushd "$TARGET_DIR"
+
+  # switch parent repo remote to SSH
+  git remote set-url origin "$SYSENV_SSH_URL"
+
+  # update the .git/config submodule URLs with those specified in .gitmodules
+  git submodule sync --recursive
+
+  # switch each submodule's own remote to SSH
+  git submodule foreach --recursive '
+    ssh_url="$(git config --file "$toplevel/.gitmodules" "submodule.$name.url")"
+    git remote set-url origin "$ssh_url"
+  '
+
+  # verify all remotes are now using SSH
+  if git remote get-url origin | grep -q "^https://" ||
+    git submodule foreach --recursive 'git remote get-url origin' | grep -q "^https://"; then
+    error "The HTTPS->SSH protocol switch failed. One or more remotes are still using HTTPS protocol."
+    exit 1
+  else
+    success "All remotes switched from using HTTPS to using SSH."
+  fi
+
+  popd
+fi
 
 # ------------------------------------------------------------------------------
 # INSTALL PACKAGES

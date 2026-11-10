@@ -154,6 +154,38 @@ else
 fi
 
 # ------------------------------------------------------------------------------
+# DOCKER
+# ------------------------------------------------------------------------------
+
+heading "Docker"
+
+if ! command -v docker &>/dev/null; then
+  warn "docker not installed"
+else
+  ok "docker $(docker --version | awk '{print $3}' | tr -d ',') installed"
+
+  for plugin in compose buildx; do
+    if docker "$plugin" version &>/dev/null; then
+      ok "docker $plugin plugin available"
+    else
+      warn "docker $plugin plugin not linked — re-run bootstrap"
+    fi
+  done
+fi
+
+if ! command -v colima &>/dev/null; then
+  warn "colima not installed"
+else
+  ok "colima $(colima version | head -1 | awk '{print $3}') installed"
+
+  if colima status &>/dev/null; then
+    ok "Colima VM running"
+  else
+    info "Colima VM stopped — run: dstart"
+  fi
+fi
+
+# ------------------------------------------------------------------------------
 # GPG
 # ------------------------------------------------------------------------------
 

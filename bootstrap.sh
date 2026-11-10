@@ -347,6 +347,34 @@ fi
 success "Packages installed."
 
 # ------------------------------------------------------------------------------
+# SETUP DOCKER
+# ------------------------------------------------------------------------------
+# Makes the Homebrew-installed docker CLI plugins (compose, buildx) discoverable
+# by the docker CLI, by symlinking them into ~/.docker/cli-plugins, and sets the
+# macOS keychain as the registry credentials store.
+#
+# NOTE: ~/.docker/config.json is rewritten by docker itself, so it's created
+#       here only if missing rather than being managed as a dotfile.
+# NOTE: the colima VM is not started here, it's started on demand (`dstart`).
+#
+# ------------------------------------------------------------------------------
+
+DOCKER_PLUGINS_DIR="$HOME/.docker/cli-plugins"
+mkdir -p "$DOCKER_PLUGINS_DIR"
+
+trace "Linking docker CLI plugins into $DOCKER_PLUGINS_DIR"
+for plugin in docker-compose docker-buildx; do
+  ln -sfn "$(brew --prefix)/opt/$plugin/bin/$plugin" "$DOCKER_PLUGINS_DIR/$plugin"
+done
+
+if [[ ! -f "$HOME/.docker/config.json" ]]; then
+  trace "Creating docker config with the keychain credentials store"
+  echo '{ "credsStore": "osxkeychain" }' >"$HOME/.docker/config.json"
+fi
+
+success "Docker set up."
+
+# ------------------------------------------------------------------------------
 # SETUP SHELL
 # ------------------------------------------------------------------------------
 # Configures Zsh (Homebrew-managed) as the default shell, and updates the
